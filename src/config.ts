@@ -27,9 +27,9 @@ const environmentSchema = z.object({
   VISION_DEFAULT_MAX_TILES: z.coerce.number().int().min(1).max(64).default(24),
   VISION_MAX_INPUT_BYTES: z.coerce.number().int().min(1_024).max(104_857_600).default(20_971_520),
   VISION_MAX_DECODED_PIXELS: z.coerce.number().int().min(1_000_000).max(400_000_000).default(40_000_000),
-  VISION_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(300_000).default(15_000),
+  VISION_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(300_000).default(30_000),
   VISION_MAX_REDIRECTS: z.coerce.number().int().min(0).max(10).default(3),
-  VISION_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(2),
+  VISION_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(1),
   VISION_ALLOWED_FILE_ROOTS: z.string().default(''),
   VISION_ALLOW_PRIVATE_NETWORK: z
     .enum(['true', 'false'])

@@ -63,9 +63,9 @@ Configuration is passed entirely through environment variables defined in the MC
 | `VISION_ALLOW_PRIVATE_NETWORK` | Boolean | No       | `false`    | Set to `true` to allow `http(s)://` fetches targeting private/internal IPs.               |
 | `VISION_MAX_INPUT_BYTES`       | Integer | No       | `20971520` | Max raw image download size in bytes (default: 20MB).                                     |
 | `VISION_MAX_DECODED_PIXELS`    | Integer | No       | `40000000` | Max allowed total decoded image pixels (default: 40MP).                                   |
-| `VISION_HTTP_TIMEOUT_MS`       | Integer | No       | `15000`    | HTTP request timeout in milliseconds.                                                     |
+| `VISION_HTTP_TIMEOUT_MS`       | Integer | No       | `30000`    | HTTP request timeout in milliseconds (30s).                                               |
 | `VISION_MAX_REDIRECTS`         | Integer | No       | `3`        | Maximum HTTP redirect count.                                                              |
-| `VISION_MAX_CONCURRENCY`       | Integer | No       | `2`        | Max concurrent tile processing calls.                                                     |
+| `VISION_MAX_CONCURRENCY`       | Integer | No       | `1`        | Max concurrent tile processing calls (default 1 to prevent 429 rate limits).              |
 
 ---
 
