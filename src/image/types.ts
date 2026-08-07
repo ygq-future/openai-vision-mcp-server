@@ -14,3 +14,21 @@ export interface AcquisitionContext {
   httpTimeoutMs?: number
   maxRedirects?: number
 }
+
+export interface NormalizedImage {
+  pixels: Buffer
+  width: number
+  height: number
+  channels: 3
+  sourceFormat: string
+  sourceName: string
+  selectedFrames: 1
+}
+
+export interface EncodedImage {
+  buffer: Buffer
+  mediaType: 'image/webp'
+  width: number
+  height: number
+  bytes: number
+}
