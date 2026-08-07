@@ -54,6 +54,7 @@ Use ESLint flat configuration with type-aware TypeScript rules. Do not disable a
 ## Development workflow
 
 - Follow test-driven development: add a failing test, verify the failure, implement the smallest behavior, then rerun focused and full checks.
+- Always synchronize documentation (including README.md and docs/development-progress.md) immediately after any code or default configuration changes.
 - Run `bun run check` before every commit.
 - Add unit tests for pure policy and transformation logic, integration tests for HTTP/image pipelines, and an MCP stdio smoke test.
 - Use conventional commit messages with focused scope.
