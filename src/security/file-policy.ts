@@ -7,8 +7,6 @@ const denied = (cause?: unknown): VisionError =>
   new VisionError('FILE_ACCESS_DENIED', 'The local file is not accessible', { cause })
 
 export async function assertAllowedFileUri(uri: string, allowedRoots: readonly string[]): Promise<string> {
-  if (allowedRoots.length === 0) throw denied()
-
   let targetPath: string
   try {
     const url = new URL(uri)
@@ -19,20 +17,22 @@ export async function assertAllowedFileUri(uri: string, allowedRoots: readonly s
     throw denied(error)
   }
 
-  const canonicalRoots = await Promise.all(
-    allowedRoots.map(async root => {
-      try {
-        return await realpath(root)
-      } catch (error) {
-        throw denied(error)
-      }
-    }),
-  )
-  const insideRoot = canonicalRoots.some(root => {
-    const pathFromRoot = relative(root, targetPath)
-    return pathFromRoot === '' || (!pathFromRoot.startsWith('..') && !isAbsolute(pathFromRoot))
-  })
-  if (!insideRoot) throw denied()
+  if (allowedRoots.length > 0) {
+    const canonicalRoots = await Promise.all(
+      allowedRoots.map(async root => {
+        try {
+          return await realpath(root)
+        } catch (error) {
+          throw denied(error)
+        }
+      }),
+    )
+    const insideRoot = canonicalRoots.some(root => {
+      const pathFromRoot = relative(root, targetPath)
+      return pathFromRoot === '' || (!pathFromRoot.startsWith('..') && !isAbsolute(pathFromRoot))
+    })
+    if (!insideRoot) throw denied()
+  }
 
   try {
     if (!(await stat(targetPath)).isFile()) throw denied()

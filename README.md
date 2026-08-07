@@ -59,7 +59,7 @@ Configuration is passed entirely through environment variables defined in the MC
 | `VISION_API_KEY`               | String  | **Yes**  | —          | API key for authentication.                                                               |
 | `VISION_MODEL`                 | String  | **Yes**  | —          | Vision model name (e.g., `gpt-4o`, `qwen-vl-max`, `claude-3-5-sonnet`).                   |
 | `VISION_DEFAULT_MAX_TILES`     | Integer | No       | `24`       | Default hard ceiling for detail tiles (1 to 64).                                          |
-| `VISION_ALLOWED_FILE_ROOTS`    | String  | No       | `""`       | Extra delimiter-separated paths allowed for `file://` URIs besides current working directory `process.cwd()`. |
+| `VISION_ALLOWED_FILE_ROOTS`    | String  | No       | `""`       | Optional delimiter-separated path whitelist for `file://` URIs. When unset, all local regular files are accessible by default. |
 | `VISION_ALLOW_PRIVATE_NETWORK` | Boolean | No       | `false`    | Set to `true` to allow `http(s)://` fetches targeting private/internal IPs.               |
 | `VISION_MAX_INPUT_BYTES`       | Integer | No       | `20971520` | Max raw image download size in bytes (default: 20MB).                                     |
 | `VISION_MAX_DECODED_PIXELS`    | Integer | No       | `40000000` | Max allowed total decoded image pixels (default: 40MP).                                   |

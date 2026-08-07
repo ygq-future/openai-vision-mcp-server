@@ -34,10 +34,12 @@ describe('local file policy', () => {
     expect(assertAllowedFileUri(pathToFileURL(cwdFile).href, [process.cwd()])).resolves.toBe(cwdFile)
   })
 
-  test('rejects absent roots, non-file URIs, outside files, and directories', () => {
-    expect(assertAllowedFileUri(pathToFileURL(inside).href, [])).rejects.toMatchObject({
-      code: 'FILE_ACCESS_DENIED',
-    })
+  test('allows local files by default when allowedRoots is empty', () => {
+    expect(assertAllowedFileUri(pathToFileURL(inside).href, [])).resolves.toBe(inside)
+    expect(assertAllowedFileUri(pathToFileURL(outside).href, [])).resolves.toBe(outside)
+  })
+
+  test('rejects non-file URIs, files outside explicit allowed roots, and directories', () => {
     expect(assertAllowedFileUri('https://example.com/a.png', [allowed])).rejects.toMatchObject({
       code: 'FILE_ACCESS_DENIED',
     })
