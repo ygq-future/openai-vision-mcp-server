@@ -1,0 +1,42 @@
+{
+  "name": "openai-vision-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for secure, bounded OpenAI-compatible vision analysis",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "openai-vision-mcp-server": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build",
+    "prepublishOnly": "bun run check"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "sharp": "0.35.3",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/bun": "1.3.14",
+    "@types/node": "20.19.43",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.66.0"
+  }
+}

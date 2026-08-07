@@ -1,0 +1,11 @@
+src/
+tests/
+docs/
+.planning/
+.codex/
+coverage/
+*.tgz
+.env*
+task_plan.md
+findings.md
+progress.md
