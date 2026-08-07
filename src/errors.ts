@@ -8,6 +8,9 @@ export type VisionErrorCode =
   | 'URL_ACCESS_DENIED'
   | 'UPSTREAM_ERROR'
   | 'UPSTREAM_TIMEOUT'
+  | 'UPSTREAM_AUTH_FAILED'
+  | 'UPSTREAM_RATE_LIMITED'
+  | 'UPSTREAM_INVALID_RESPONSE'
   | 'INTERNAL_ERROR'
 
 export interface VisionErrorOptions {
