@@ -1,0 +1,37 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local project documentation (intentionally not tracked)
+docs/
+
+# AI-agent state and local assistant configuration
+.planning/
+.claude/
+.codex/
+.cursor/
+.continue/
+.windsurf/
+.roo/
+.cline/
+.gemini/
+.superpowers/
+.aider*
+task_plan.md
+findings.md
+progress.md
+
