@@ -52,7 +52,7 @@ function detailPrompt(userPrompt: string, batch: readonly DetailTile[]): string 
         `image=${String(tile.imageIndex)} tile=${String(tile.tileIndex)} bounds=(${String(tile.bounds.x)},${String(tile.bounds.y)},${String(tile.bounds.width)},${String(tile.bounds.height)})`,
     )
     .join('\n')
-  return `Analyze these detail tiles for the user's request: ${JSON.stringify(userPrompt)}\n${labels}\nReport observations with their image and tile labels. Do not infer content outside these bounds.`
+  return `Analyze these high-resolution static image crop tiles (these are still image crops, NOT a video) for the user's request: ${JSON.stringify(userPrompt)}\n${labels}\nReport all text, UI elements, and visual observations found inside these static tiles with their image and tile labels. Do not infer content outside these bounds.`
 }
 
 export async function analyzeDetailTiles(input: DetailAnalysisInput): Promise<DetailAnalysisResult> {
