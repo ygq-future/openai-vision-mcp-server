@@ -11,4 +11,6 @@ export interface AcquisitionContext {
   maxInputBytes: number
   allowedFileRoots: string[]
   allowPrivateNetwork: boolean
+  httpTimeoutMs?: number
+  maxRedirects?: number
 }
