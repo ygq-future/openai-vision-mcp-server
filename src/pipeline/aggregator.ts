@@ -1,3 +1,4 @@
+import type { EncodedImage } from '../image/types.js'
 import type { VisionClient } from '../openai/client.js'
 import type { AnalysisSegment, AnalysisWarning } from '../tools/analyze-images/schema.js'
 import type { TokenUsage } from './analyzer.js'
@@ -5,6 +6,7 @@ import type { TokenUsage } from './analyzer.js'
 export interface AggregationInput {
   userPrompt: string
   overviewText: string
+  overviewImages?: readonly EncodedImage[]
   segments: readonly AnalysisSegment[]
   warnings: readonly AnalysisWarning[]
   complete: boolean
@@ -50,13 +52,16 @@ Known warnings or missing regions: ${JSON.stringify(input.warnings)}
 Ordered high-resolution detail tile observations:
 ${observations}
 
-Merge the evidence with priority on high-resolution detail tile observations. If overview observation states small text was unreadable, unparsed, or missing, rely directly on the clear detail tile observations. remove overlap duplicates, preserve spatial relationships, expose contradictions, and do not claim analysis of missing regions. Return only the final clear answer to the user.`
+Merge the evidence with priority on high-resolution detail tile observations and the provided overview images. If overview observation states small text was unreadable, unparsed, or missing, rely directly on the clear detail tile observations and visual reference. remove overlap duplicates, preserve spatial relationships, expose contradictions, and do not claim analysis of missing regions. Return only the final clear answer to the user.`
 }
 
 export async function aggregateAnalysis(input: AggregationInput): Promise<AggregationResult> {
   const segments = orderedSegments(input.segments)
   try {
-    const completion = await input.client.complete({ prompt: aggregationPrompt(input, segments), images: [] })
+    const completion = await input.client.complete({
+      prompt: aggregationPrompt(input, segments),
+      images: input.overviewImages ?? [],
+    })
     return {
       answer: completion.text,
       segments,

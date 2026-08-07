@@ -112,6 +112,7 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
   let overviewCalls = 0
   let lastFailure: VisionError | undefined
 
+  const overviewImages: EncodedImage[] = []
   for (let imageIndex = 0; imageIndex < input.images.length; imageIndex += 1) {
     const source = input.images[imageIndex]
     if (!source) continue
@@ -119,6 +120,7 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
       const acquired = await acquire(source, acquisitionContext)
       const image = await normalize(acquired, context.config.maxDecodedPixels)
       const overview = await overviewEncoder(image)
+      overviewImages.push(overview)
       overviewCalls += 1
       const completion = await context.client.complete({
         prompt: buildOverviewPrompt(input.prompt, imageIndex),
@@ -208,6 +210,7 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
   const aggregation = await aggregateAnalysis({
     userPrompt: input.prompt,
     overviewText: overviewSegments.map(segment => segment.text).join('\n\n'),
+    overviewImages,
     segments: [...overviewSegments, ...detail.segments],
     warnings,
     complete: warnings.length === 0 && detail.complete,
