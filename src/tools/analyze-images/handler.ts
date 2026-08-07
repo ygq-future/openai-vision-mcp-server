@@ -1,12 +1,9 @@
+import type { CallToolResult } from '@modelcontextprotocol/server'
 import { toSafeError } from '../../errors.js'
 import type { AnalyzeImagesInput, AnalyzeImagesResult } from './schema.js'
 import { analyzeImagesInputSchema, analyzeImagesOutputSchema } from './schema.js'
 
-export interface ToolResponse {
-  content: { type: 'text'; text: string }[]
-  structuredContent?: AnalyzeImagesResult
-  isError: boolean
-}
+export type ToolResponse = CallToolResult
 
 export type AnalyzeImagesHandler = (input: unknown) => Promise<ToolResponse>
 
@@ -21,7 +18,7 @@ export function createAnalyzeImagesHandler(dependencies: AnalyzeImagesHandlerDep
       const result = analyzeImagesOutputSchema.parse(await dependencies.runAnalysis(parsedInput))
       return {
         content: [{ type: 'text', text: result.answer }],
-        structuredContent: result,
+        structuredContent: { ...result },
         isError: !result.complete && result.answer.length === 0,
       }
     } catch (error) {

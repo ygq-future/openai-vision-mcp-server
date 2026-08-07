@@ -29,7 +29,7 @@ describe('analyze_images handler', () => {
     })
     const response = await handler({ prompt: 'inspect', images: [{ type: 'url', url: 'https://example.com/a.png' }] })
     expect(response.isError).toBe(true)
-    expect(response.content[0]?.text).toBe('Authentication failed')
+    expect(response.content[0]).toMatchObject({ type: 'text', text: 'Authentication failed' })
     expect(response).not.toHaveProperty('structuredContent')
   })
 })
