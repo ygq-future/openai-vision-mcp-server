@@ -46,10 +46,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): VisionConfig {
   }
 
   const values = parsed.data
-  const roots = values.VISION_ALLOWED_FILE_ROOTS.split(delimiter)
+  const userRoots = values.VISION_ALLOWED_FILE_ROOTS.split(delimiter)
     .map(root => root.trim())
     .filter(root => root.length > 0)
     .map(root => resolve(root))
+  const roots = [resolve(process.cwd()), ...userRoots]
 
   return {
     baseUrl: values.VISION_BASE_URL.replace(/\/+$/, ''),

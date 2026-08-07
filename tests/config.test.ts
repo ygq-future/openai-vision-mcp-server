@@ -21,7 +21,7 @@ describe('loadConfig', () => {
     expect(config.httpTimeoutMs).toBe(15_000)
     expect(config.maxRedirects).toBe(3)
     expect(config.maxConcurrency).toBe(2)
-    expect(config.allowedFileRoots).toEqual([])
+    expect(config.allowedFileRoots).toEqual([resolve(process.cwd())])
     expect(config.allowPrivateNetwork).toBe(false)
   })
 
@@ -40,7 +40,8 @@ describe('loadConfig', () => {
 
     expect(config.defaultMaxTiles).toBe(64)
     expect(config.allowPrivateNetwork).toBe(true)
-    expect(config.allowedFileRoots).toHaveLength(2)
+    expect(config.allowedFileRoots).toContain(resolve(process.cwd()))
+    expect(config.allowedFileRoots).toHaveLength(3)
     expect(config.allowedFileRoots.every(isAbsolute)).toBe(true)
   })
 

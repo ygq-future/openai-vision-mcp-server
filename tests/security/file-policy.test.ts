@@ -29,6 +29,11 @@ describe('local file policy', () => {
     expect(assertAllowedFileUri(pathToFileURL(inside).href, [allowed])).resolves.toBe(inside)
   })
 
+  test('allows files inside current working directory process.cwd() by default', () => {
+    const cwdFile = join(process.cwd(), 'package.json')
+    expect(assertAllowedFileUri(pathToFileURL(cwdFile).href, [process.cwd()])).resolves.toBe(cwdFile)
+  })
+
   test('rejects absent roots, non-file URIs, outside files, and directories', () => {
     expect(assertAllowedFileUri(pathToFileURL(inside).href, [])).rejects.toMatchObject({
       code: 'FILE_ACCESS_DENIED',
