@@ -1,15 +1,37 @@
 {
   "name": "openai-vision-mcp-server",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "MCP server for secure, bounded OpenAI-compatible vision analysis",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ygq-future/openai-vision-mcp-server.git"
+  },
+  "homepage": "https://github.com/ygq-future/openai-vision-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/ygq-future/openai-vision-mcp-server/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "vision",
+    "openai",
+    "gpt-4o",
+    "qwen-vl",
+    "image-analysis",
+    "tiling",
+    "stdio",
+    "multimodal",
+    "vision-mcp"
+  ],
   "bin": {
     "openai-vision-mcp-server": "./dist/index.js"
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "engines": {
     "node": ">=20.19.0"

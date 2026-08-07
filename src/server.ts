@@ -12,7 +12,7 @@ export interface ServerDependencies {
 }
 
 export function createServer(dependencies: ServerDependencies): McpServer {
-  const server = new McpServer({ name: 'openai-vision-mcp-server', version: '0.1.7' }, { capabilities: { tools: {} } })
+  const server = new McpServer({ name: 'openai-vision-mcp-server', version: '0.1.8' }, { capabilities: { tools: {} } })
   const client = dependencies.client ?? createVisionClient(dependencies.config)
   const handler = createAnalyzeImagesHandler({
     runAnalysis: input => runAnalysis(input, { config: dependencies.config, client }),

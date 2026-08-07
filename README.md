@@ -1,8 +1,11 @@
 # openai-vision-mcp-server
 
 [![npm version](https://img.shields.io/npm/v/openai-vision-mcp-server.svg)](https://www.npmjs.com/package/openai-vision-mcp-server)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-ygq--future%2Fopenai--vision--mcp--server-blue?logo=github)](https://github.com/ygq-future/openai-vision-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen.svg)](https://nodejs.org)
+
+**GitHub Repository**: [https://github.com/ygq-future/openai-vision-mcp-server](https://github.com/ygq-future/openai-vision-mcp-server)
 
 A Model Context Protocol (MCP) stdio server for bounded, high-precision image analysis using OpenAI Chat Completions-compatible Vision APIs (e.g. OpenAI `gpt-4o`, Qwen VL, DeepSeek Vision, Local vLLM/Ollama, etc.).
 
@@ -114,4 +117,4 @@ bun run build
 
 ## 📄 License
 
-[MIT License](LICENSE) © 2026
+[MIT License](LICENSE) © 2026 [ygq-future](https://github.com/ygq-future)
