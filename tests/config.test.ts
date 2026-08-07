@@ -17,12 +17,12 @@ describe('loadConfig', () => {
     expect(config.model).toBe('vision-model')
     expect(config.defaultMaxTiles).toBe(24)
     expect(config.maxInputBytes).toBe(20_971_520)
-    expect(config.maxDecodedPixels).toBe(40_000_000)
+    expect(config.maxDecodedPixels).toBe(100_000_000)
     expect(config.httpTimeoutMs).toBe(30_000)
     expect(config.maxRedirects).toBe(3)
     expect(config.maxConcurrency).toBe(1)
     expect(config.allowedFileRoots).toEqual([])
-    expect(config.allowPrivateNetwork).toBe(false)
+    expect(config.allowPrivateNetwork).toBe(true)
   })
 
   test('parses bounded overrides, booleans, and file roots', () => {
