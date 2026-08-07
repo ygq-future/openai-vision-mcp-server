@@ -45,12 +45,12 @@ function aggregationPrompt(input: AggregationInput, segments: readonly AnalysisS
     )
     .join('\n\n')
   return `Answer the user's request: ${JSON.stringify(input.userPrompt)}
-Overview: ${input.overviewText}
+Overview observation: ${input.overviewText}
 Known warnings or missing regions: ${JSON.stringify(input.warnings)}
-Ordered detail observations:
+Ordered high-resolution detail tile observations:
 ${observations}
 
-Merge the evidence, remove overlap duplicates, preserve spatial relationships, expose contradictions, and do not claim analysis of missing regions. Return only the final answer.`
+Merge the evidence with priority on high-resolution detail tile observations. If overview observation states small text was unreadable, unparsed, or missing, rely directly on the clear detail tile observations. Remove overlap duplicates, preserve spatial relationships, expose contradictions, and do not claim analysis of missing regions. Return only the final clear answer to the user.`
 }
 
 export async function aggregateAnalysis(input: AggregationInput): Promise<AggregationResult> {
