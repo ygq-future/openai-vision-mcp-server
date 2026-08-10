@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { VisionError } from '../../src/errors.js'
 import { analyzeDetailTiles } from '../../src/pipeline/analyzer.js'
 import type { DetailTile } from '../../src/pipeline/analyzer.js'
 import type { VisionClient } from '../../src/openai/client.js'
@@ -47,7 +48,11 @@ describe('analyzeDetailTiles', () => {
         const batch = calls
         calls += 1
         return batch === 1
-          ? Promise.reject(new Error('failed'))
+          ? Promise.reject(
+              new VisionError('UPSTREAM_TIMEOUT', 'The vision API request timed out.', {
+                details: { stage: 'vision_api' },
+              }),
+            )
           : Promise.resolve({
               text: `batch-${String(batch)}`,
               finishReason: 'stop',
@@ -58,7 +63,15 @@ describe('analyzeDetailTiles', () => {
     const result = await analyzeDetailTiles({ tiles, userPrompt: 'inspect', client, maxConcurrency: 2 })
     expect(result.segments).toHaveLength(8)
     expect(result.complete).toBe(false)
-    expect(result.warnings.some(warning => warning.code === 'DETAIL_BATCH_FAILED')).toBe(true)
+    expect(result.warnings).toContainEqual({
+      code: 'DETAIL_BATCH_FAILED',
+      message: 'Detail batch 1 was skipped: The vision API request timed out.',
+      retryable: true,
+      userActionRequired: true,
+      nextAction:
+        'Continue with successful batches and disclose the missing detail region. Retry this analysis once only if the missing region is required.',
+      details: { stage: 'vision_api', underlyingCode: 'UPSTREAM_TIMEOUT', batchIndex: 1 },
+    })
     expect(result.usage.promptTokens).toBeNull()
   })
 })

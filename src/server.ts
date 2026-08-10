@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/server'
 import type { VisionConfig } from './config.js'
+import { SERVER_INFO } from './constants.js'
 import { createVisionClient } from './openai/client.js'
 import type { VisionClient } from './openai/client.js'
 import { runAnalysis } from './pipeline/run-analysis.js'
@@ -12,7 +13,7 @@ export interface ServerDependencies {
 }
 
 export function createServer(dependencies: ServerDependencies): McpServer {
-  const server = new McpServer({ name: 'openai-vision-mcp-server', version: '0.1.9' }, { capabilities: { tools: {} } })
+  const server = new McpServer(SERVER_INFO, { capabilities: { tools: {} } })
   const client = dependencies.client ?? createVisionClient(dependencies.config)
   const handler = createAnalyzeImagesHandler({
     runAnalysis: input => runAnalysis(input, { config: dependencies.config, client }),

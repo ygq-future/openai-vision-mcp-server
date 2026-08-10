@@ -1,9 +1,10 @@
 import type { VisionConfig } from '../config.js'
+import { IMAGE_POLICY } from '../constants.js'
 import { toSafeError, VisionError } from '../errors.js'
 import { acquireImage } from '../image/acquire.js'
 import { normalizeImage } from '../image/normalize.js'
 import { createOverview } from '../image/overview.js'
-import { createGrid, encodeTile, expandRegion } from '../image/tiles.js'
+import { createGrid, encodeTile, expandRegion, selectEvenlyDistributed } from '../image/tiles.js'
 import type { ContentKind, TileBounds } from '../image/tiles.js'
 import type { AcquiredImage, AcquisitionContext, EncodedImage, NormalizedImage } from '../image/types.js'
 import type { VisionClient, VisionCompletion } from '../openai/client.js'
@@ -60,12 +61,7 @@ function chooseCandidates(candidates: readonly CandidateTile[], cap: number): Ca
     candidate => !selectedKeys.has(`${String(candidate.imageIndex)}:${String(candidate.tileIndex)}`),
   )
   const slots = Math.min(cap - preferred.length, remaining.length)
-  for (let slot = 0; slot < slots; slot += 1) {
-    const position =
-      slots === 1 ? Math.floor((remaining.length - 1) / 2) : Math.round((slot * (remaining.length - 1)) / (slots - 1))
-    const candidate = remaining[position]
-    if (candidate) preferred.push(candidate)
-  }
+  preferred.push(...selectEvenlyDistributed(remaining, slots))
   return preferred.sort((a, b) => a.imageIndex - b.imageIndex || a.tileIndex - b.tileIndex)
 }
 
@@ -133,18 +129,32 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
         imageIndex,
         image,
         plan,
-        grid: needsDetail(input.coverage, plan) ? createGrid(image.width, image.height, 1024, 128) : [],
+        grid: needsDetail(input.coverage, plan)
+          ? createGrid(image.width, image.height, IMAGE_POLICY.grid.tileSize, IMAGE_POLICY.grid.overlap)
+          : [],
       })
     } catch (error) {
       lastFailure = toSafeError(error)
-      warnings.push({ code: 'IMAGE_FAILED', message: `Image ${String(imageIndex)} could not be analyzed`, imageIndex })
+      warnings.push({
+        code: 'IMAGE_FAILED',
+        message: `Image ${String(imageIndex)} was skipped: ${lastFailure.safeMessage}`,
+        retryable: lastFailure.retryable,
+        userActionRequired: true,
+        nextAction: lastFailure.retryable
+          ? 'Continue with the other images and disclose this omission. Retry this image once only if it is required.'
+          : `Continue with the other images and disclose this omission. ${lastFailure.nextAction}`,
+        details: { ...lastFailure.details, underlyingCode: lastFailure.code, imageIndex },
+        imageIndex,
+      })
     }
   }
-  if (prepared.length === 0) throw lastFailure ?? new VisionError('DECODE_FAILED', 'No image could be analyzed')
+  if (prepared.length === 0) {
+    throw lastFailure ?? new VisionError('DECODE_FAILED', 'No supplied image could be analyzed.')
+  }
 
   const candidates: CandidateTile[] = prepared.flatMap(item => {
     const preferredRegions = item.plan.regions.map(region =>
-      expandRegion(region, item.image.width, item.image.height, 0.15),
+      expandRegion(region, item.image.width, item.image.height, IMAGE_POLICY.grid.preferredRegionMargin),
     )
     return item.grid.map((bounds, tileIndex) => ({
       imageIndex: item.imageIndex,
@@ -160,7 +170,12 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
   if (selected.length < candidates.length) {
     warnings.push({
       code: 'TILE_BUDGET_EXCEEDED',
-      message: `Detail coverage required ${String(candidates.length)} tiles but the call allowed ${String(maxTiles)}`,
+      message: `Detail coverage requires ${String(candidates.length)} tiles, but this call allows ${String(maxTiles)}.`,
+      retryable: false,
+      userActionRequired: true,
+      nextAction:
+        'Continue with the partial result, disclose the missing coverage, and increase maxTiles only if the user requests complete analysis.',
+      details: { requiredTiles: candidates.length, allowedTiles: maxTiles },
     })
   }
 
@@ -173,10 +188,21 @@ export async function runAnalysis(input: AnalyzeImagesInput, context: AnalysisCo
         bounds: candidate.bounds,
         encoded: await tileEncoder(candidate.image, candidate.bounds, candidate.contentKind),
       })
-    } catch {
+    } catch (error) {
+      const safe = toSafeError(error)
       warnings.push({
         code: 'DETAIL_TILE_FAILED',
-        message: `Detail tile ${String(candidate.tileIndex)} could not be encoded`,
+        message: `Detail tile ${String(candidate.tileIndex)} for image ${String(candidate.imageIndex)} was skipped: ${safe.safeMessage}`,
+        retryable: safe.retryable,
+        userActionRequired: true,
+        nextAction:
+          'Continue with the available regions and disclose this missing tile. Do not retry the entire analysis automatically.',
+        details: {
+          ...safe.details,
+          underlyingCode: safe.code,
+          imageIndex: candidate.imageIndex,
+          tileIndex: candidate.tileIndex,
+        },
         imageIndex: candidate.imageIndex,
       })
     }

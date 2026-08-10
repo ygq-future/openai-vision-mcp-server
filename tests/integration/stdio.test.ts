@@ -6,7 +6,12 @@ import type { AddressInfo } from 'node:net'
 import sharp from 'sharp'
 
 describe('MCP stdio server', () => {
+  let upstreamStatus = 200
   const upstream = createServer((_request, response) => {
+    if (upstreamStatus !== 200) {
+      response.writeHead(upstreamStatus).end('secret upstream body')
+      return
+    }
     response.writeHead(200, { 'content-type': 'application/json' })
     response.end(
       JSON.stringify({
@@ -83,8 +88,29 @@ describe('MCP stdio server', () => {
       expect(result.isError).not.toBe(true)
       expect(result.content[0]).toMatchObject({ type: 'text', text: 'A one-pixel image' })
       expect(result.structuredContent).toMatchObject({ sourceCount: 1, detailTiles: 0, apiCalls: 1 })
+
+      upstreamStatus = 401
+      const errorResult = await client.callTool({
+        name: 'analyze_images',
+        arguments: {
+          prompt: 'Describe',
+          images: [{ type: 'base64', data: png, mediaType: 'image/png' }],
+          coverage: 'overview',
+        },
+      })
+      expect(errorResult.isError).toBe(true)
+      expect(errorResult.structuredContent).toMatchObject({
+        error: {
+          code: 'UPSTREAM_AUTH_FAILED',
+          retryable: false,
+          userActionRequired: true,
+          nextAction: 'Do not retry. Ask the user to verify VISION_API_KEY, VISION_BASE_URL, and VISION_MODEL.',
+        },
+      })
+      expect(JSON.stringify(errorResult)).not.toContain('secret upstream body')
       expect(stderr.join('')).not.toContain('test-key')
     } finally {
+      upstreamStatus = 200
       await client.close()
     }
   })

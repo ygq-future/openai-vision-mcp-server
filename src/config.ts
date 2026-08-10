@@ -1,5 +1,6 @@
 import { delimiter, resolve } from 'node:path'
 import { z } from 'zod'
+import { CONFIG_LIMITS, TOOL_LIMITS } from './constants.js'
 import { VisionError } from './errors.js'
 
 export interface VisionConfig {
@@ -24,12 +25,42 @@ const environmentSchema = z.object({
     .refine(value => URL.canParse(value) && ['http:', 'https:'].includes(new URL(value).protocol)),
   VISION_API_KEY: requiredText,
   VISION_MODEL: requiredText,
-  VISION_DEFAULT_MAX_TILES: z.coerce.number().int().min(1).max(64).default(24),
-  VISION_MAX_INPUT_BYTES: z.coerce.number().int().min(1_024).max(104_857_600).default(20_971_520),
-  VISION_MAX_DECODED_PIXELS: z.coerce.number().int().min(1_000_000).max(400_000_000).default(100_000_000),
-  VISION_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(300_000).default(30_000),
-  VISION_MAX_REDIRECTS: z.coerce.number().int().min(0).max(10).default(3),
-  VISION_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(1),
+  VISION_DEFAULT_MAX_TILES: z.coerce
+    .number()
+    .int()
+    .min(TOOL_LIMITS.detailTiles.min)
+    .max(TOOL_LIMITS.detailTiles.max)
+    .default(TOOL_LIMITS.detailTiles.default),
+  VISION_MAX_INPUT_BYTES: z.coerce
+    .number()
+    .int()
+    .min(CONFIG_LIMITS.maxInputBytes.min)
+    .max(CONFIG_LIMITS.maxInputBytes.max)
+    .default(CONFIG_LIMITS.maxInputBytes.default),
+  VISION_MAX_DECODED_PIXELS: z.coerce
+    .number()
+    .int()
+    .min(CONFIG_LIMITS.maxDecodedPixels.min)
+    .max(CONFIG_LIMITS.maxDecodedPixels.max)
+    .default(CONFIG_LIMITS.maxDecodedPixels.default),
+  VISION_HTTP_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(CONFIG_LIMITS.httpTimeoutMs.min)
+    .max(CONFIG_LIMITS.httpTimeoutMs.max)
+    .default(CONFIG_LIMITS.httpTimeoutMs.default),
+  VISION_MAX_REDIRECTS: z.coerce
+    .number()
+    .int()
+    .min(CONFIG_LIMITS.maxRedirects.min)
+    .max(CONFIG_LIMITS.maxRedirects.max)
+    .default(CONFIG_LIMITS.maxRedirects.default),
+  VISION_MAX_CONCURRENCY: z.coerce
+    .number()
+    .int()
+    .min(CONFIG_LIMITS.maxConcurrency.min)
+    .max(CONFIG_LIMITS.maxConcurrency.max)
+    .default(CONFIG_LIMITS.maxConcurrency.default),
   VISION_ALLOWED_FILE_ROOTS: z.string().default(''),
   VISION_ALLOW_PRIVATE_NETWORK: z
     .enum(['true', 'false'])
@@ -42,7 +73,9 @@ export function loadConfig(env: NodeJS.ProcessEnv): VisionConfig {
 
   if (!parsed.success) {
     const fields = [...new Set(parsed.error.issues.map(issue => String(issue.path[0] ?? 'environment')))].sort()
-    throw new VisionError('CONFIG_INVALID', `Invalid configuration fields: ${fields.join(', ')}`)
+    throw new VisionError('CONFIG_INVALID', `Invalid MCP server configuration fields: ${fields.join(', ')}.`, {
+      details: { invalidFields: fields.join(', ') },
+    })
   }
 
   const values = parsed.data

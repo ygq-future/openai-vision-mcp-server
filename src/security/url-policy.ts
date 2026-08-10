@@ -62,14 +62,25 @@ export async function assertSafeRemoteUrl(
   try {
     url = new URL(input)
   } catch (error) {
-    throw new VisionError('URL_ACCESS_DENIED', 'The remote image URL is invalid', { cause: error })
+    throw new VisionError('URL_ACCESS_DENIED', 'The remote image URL is invalid.', {
+      details: { stage: 'url_validation' },
+      cause: error,
+    })
   }
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
-    throw new VisionError('URL_ACCESS_DENIED', 'The remote image URL is not allowed')
+    throw new VisionError('URL_ACCESS_DENIED', 'The remote image URL must use HTTP(S) without embedded credentials.', {
+      details: { stage: 'url_validation' },
+    })
   }
   if (policy.allowPrivateNetwork) return url
   if (url.hostname.toLowerCase() === 'localhost') {
-    throw new VisionError('URL_ACCESS_DENIED', 'The remote image host is not public')
+    throw new VisionError(
+      'URL_ACCESS_DENIED',
+      'The remote image host is private while private-network access is disabled.',
+      {
+        details: { stage: 'url_policy' },
+      },
+    )
   }
 
   const hostname = url.hostname.replace(/^\[|\]$/g, '')
@@ -77,10 +88,15 @@ export async function assertSafeRemoteUrl(
   try {
     addresses = isIP(hostname) ? [{ address: hostname, family: isIP(hostname) }] : await lookup(hostname)
   } catch (error) {
-    throw new VisionError('URL_ACCESS_DENIED', 'The remote image host could not be resolved', { cause: error })
+    throw new VisionError('URL_ACCESS_DENIED', 'The remote image hostname could not be resolved.', {
+      details: { stage: 'dns_resolution' },
+      cause: error,
+    })
   }
   if (addresses.length === 0 || addresses.some(result => isPrivateIp(result.address))) {
-    throw new VisionError('URL_ACCESS_DENIED', 'The remote image host is not public')
+    throw new VisionError('URL_ACCESS_DENIED', 'The remote image host resolved to a non-public address.', {
+      details: { stage: 'url_policy' },
+    })
   }
   return url
 }

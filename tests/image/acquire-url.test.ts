@@ -22,6 +22,8 @@ describe('remote image acquisition', () => {
       response.end(Buffer.alloc(32))
     } else if (request.url === '/slow') {
       setTimeout(() => response.writeHead(200, { 'content-type': 'image/png' }).end(png), 100)
+    } else if (request.url === '/unavailable') {
+      response.writeHead(503).end()
     } else {
       response.writeHead(404).end()
     }
@@ -75,6 +77,26 @@ describe('remote image acquisition', () => {
       acquireImage({ type: 'url', url: `${origin}/slow` }, { ...context, httpTimeoutMs: 10 }),
     ).rejects.toMatchObject({
       code: 'UPSTREAM_TIMEOUT',
+      retryable: true,
+      userActionRequired: false,
+      nextAction: 'Retry once. If the same timeout happens again, stop and notify the user.',
+    })
+  })
+
+  test('distinguishes permanent source HTTP errors from retryable server failures', () => {
+    expect(acquireImage({ type: 'url', url: `${origin}/missing` }, context)).rejects.toMatchObject({
+      code: 'UPSTREAM_ERROR',
+      retryable: false,
+      userActionRequired: true,
+      nextAction: 'Do not retry the same URL. Ask the user to verify it or provide a different image URL.',
+      details: { stage: 'image_fetch', httpStatus: 404 },
+    })
+    expect(acquireImage({ type: 'url', url: `${origin}/unavailable` }, context)).rejects.toMatchObject({
+      code: 'UPSTREAM_ERROR',
+      retryable: true,
+      userActionRequired: false,
+      nextAction: 'Retry once. If the same image server failure happens again, stop and notify the user.',
+      details: { stage: 'image_fetch', httpStatus: 503 },
     })
   })
 })

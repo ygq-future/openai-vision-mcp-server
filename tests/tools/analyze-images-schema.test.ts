@@ -105,10 +105,26 @@ describe('analyze_images output', () => {
     const withWarning = {
       ...result,
       complete: false,
-      warnings: [{ code: 'TILE_BUDGET_EXCEEDED', message: 'Partial', imageIndex: 0 }],
+      warnings: [
+        {
+          code: 'TILE_BUDGET_EXCEEDED',
+          message: 'Partial',
+          retryable: false,
+          userActionRequired: true,
+          nextAction: 'Disclose incomplete coverage.',
+          details: { requiredTiles: 4, allowedTiles: 2 },
+          imageIndex: 0,
+        },
+      ],
     }
 
     expect(analyzeImagesOutputSchema.parse(withWarning).complete).toBe(false)
+    expect(() =>
+      analyzeImagesOutputSchema.parse({
+        ...result,
+        warnings: [{ code: 'TILE_BUDGET_EXCEEDED', message: 'Missing action fields' }],
+      }),
+    ).toThrow()
   })
 
   test('rejects missing completeness and invalid bounds', () => {

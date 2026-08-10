@@ -65,7 +65,7 @@ Configuration is passed entirely through environment variables defined in the MC
 | :----------------------------- | :------ | :------- | :--------- | :---------------------------------------------------------------------------------------- |
 | `VISION_BASE_URL`              | String  | **Yes**  | —          | Base URL of the OpenAI-compatible API (e.g., `https://api.openai.com/v1`).                |
 | `VISION_API_KEY`               | String  | **Yes**  | —          | API key for authentication.                                                               |
-| `VISION_MODEL`                 | String  | **Yes**  | —          | Vision model name (e.g., `gpt-4o`, `qwen-vl-max`, `claude-3-5-sonnet`).                   |
+| `VISION_MODEL`                 | String  | **Yes**  | —          | Vision model name exposed by the configured OpenAI-compatible endpoint (e.g., `gpt-4o` or `qwen-vl-max`). |
 | `VISION_DEFAULT_MAX_TILES`     | Integer | No       | `24`       | Default hard ceiling for detail tiles (1 to 64).                                          |
 | `VISION_ALLOWED_FILE_ROOTS`    | String  | No       | `""`       | Optional delimiter-separated path whitelist for `file://` URIs. When unset, all local regular files are accessible by default. |
 | `VISION_ALLOW_PRIVATE_NETWORK` | Boolean | No       | `true`     | Set to `false` to block `http(s)://` fetches targeting private/internal IPs.               |
@@ -97,6 +97,31 @@ Analyzes single or multiple images using configured Vision models and produces s
 - **File Source**: `{ "type": "file", "uri": "file:///path/to/image.png", "label": "optional label" }`
 - **URL Source**: `{ "type": "url", "url": "https://example.com/photo.jpg", "label": "optional label" }`
 - **Base64 Source**: `{ "type": "base64", "data": "<base64_string>", "mediaType": "image/png", "label": "optional label" }`
+
+#### Results, warnings, and errors
+
+A successful result includes `complete`. When `complete` is `false`, the answer may still contain useful evidence, but
+every `warnings[]` entry explains the missing coverage with these machine-readable fields:
+
+```json
+{
+  "code": "TILE_BUDGET_EXCEEDED",
+  "message": "Detail coverage requires 16 tiles, but this call allows 10.",
+  "retryable": false,
+  "userActionRequired": true,
+  "nextAction": "Continue with the partial result, disclose the missing coverage, and increase maxTiles only if the user requests complete analysis.",
+  "details": { "requiredTiles": 16, "allowedTiles": 10 }
+}
+```
+
+A failed Tool call returns `isError: true`, the same guidance as readable text, and
+`structuredContent.error` containing `code`, `message`, `retryable`, `userActionRequired`, `nextAction`, and optional
+safe `details`. The calling AI should follow `nextAction`: permanent input/configuration/protocol failures explicitly
+say not to retry, while transient network, timeout, rate-limit, and server failures allow one bounded caller retry. If
+the same transient failure repeats, stop and notify the user instead of looping.
+
+Errors never include credentials, authorization headers, Base64/image bytes, upstream response bodies, complete local
+paths or URLs, stack traces, or full prompts.
 
 ---
 

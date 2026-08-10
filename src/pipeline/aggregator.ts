@@ -1,4 +1,5 @@
 import type { EncodedImage } from '../image/types.js'
+import { toSafeError } from '../errors.js'
 import type { VisionClient } from '../openai/client.js'
 import type { AnalysisSegment, AnalysisWarning } from '../tools/analyze-images/schema.js'
 import type { TokenUsage } from './analyzer.js'
@@ -70,7 +71,8 @@ export async function aggregateAnalysis(input: AggregationInput): Promise<Aggreg
       usage: addUsage(input.usage, completion.usage),
       apiCalls: 1,
     }
-  } catch {
+  } catch (error) {
+    const safe = toSafeError(error)
     const fallback = [
       input.overviewText ? `[overview]\n${input.overviewText}` : '',
       ...segments.map(
@@ -85,7 +87,15 @@ export async function aggregateAnalysis(input: AggregationInput): Promise<Aggreg
       segments,
       warnings: [
         ...input.warnings,
-        { code: 'AGGREGATION_FAILED', message: 'Final aggregation failed; ordered observations are returned' },
+        {
+          code: 'AGGREGATION_FAILED',
+          message: `Final aggregation failed; ordered observations are returned instead: ${safe.safeMessage}`,
+          retryable: safe.retryable,
+          userActionRequired: true,
+          nextAction:
+            'Use the ordered observations as a partial result, tell the user they were not finally merged, and do not retry automatically.',
+          details: { ...safe.details, underlyingCode: safe.code },
+        },
       ],
       complete: false,
       usage: input.usage,

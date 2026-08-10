@@ -72,8 +72,10 @@ describe('safe errors', () => {
     expect(toSafeError(domain)).toBe(domain)
     expect(toSafeError(new Error('Bearer secret'))).toMatchObject({
       code: 'INTERNAL_ERROR',
-      safeMessage: 'An unexpected error occurred',
+      safeMessage: 'The vision server encountered an unexpected internal error.',
       retryable: false,
+      userActionRequired: true,
+      nextAction: 'Do not retry automatically. Notify the user and ask them to inspect the MCP server diagnostics.',
     })
   })
 })

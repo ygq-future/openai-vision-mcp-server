@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { VisionError } from '../../src/errors.js'
 import { runAnalysis } from '../../src/pipeline/run-analysis.js'
 import type { AnalysisContext } from '../../src/pipeline/run-analysis.js'
 import type { VisionClient } from '../../src/openai/client.js'
@@ -110,13 +111,57 @@ describe('runAnalysis', () => {
     expect(fixture.counts.encode).toBe(0)
   })
 
+  test('continues with usable images and preserves the failed image disposition', async () => {
+    const fixture = context(500, 300)
+    const acquire = fixture.value.acquire
+    if (!acquire) throw new TypeError('Expected the acquisition fixture')
+    fixture.value.acquire = (source, acquisitionContext) =>
+      source.type === 'base64' && source.data === 'bad'
+        ? Promise.reject(
+            new VisionError('UPSTREAM_TIMEOUT', 'The remote image request timed out.', {
+              details: { stage: 'image_fetch' },
+            }),
+          )
+        : acquire(source, acquisitionContext)
+
+    const result = await runAnalysis(
+      {
+        ...baseInput,
+        images: [{ ...baseSource, data: 'bad' }, baseSource],
+        coverage: 'overview',
+      },
+      fixture.value,
+    )
+
+    expect(result.sourceCount).toBe(1)
+    expect(result.complete).toBe(false)
+    expect(result.warnings).toContainEqual({
+      code: 'IMAGE_FAILED',
+      message: 'Image 0 was skipped: The remote image request timed out.',
+      retryable: true,
+      userActionRequired: true,
+      nextAction:
+        'Continue with the other images and disclose this omission. Retry this image once only if it is required.',
+      details: { stage: 'image_fetch', underlyingCode: 'UPSTREAM_TIMEOUT', imageIndex: 0 },
+      imageIndex: 0,
+    })
+  })
+
   test('full coverage enforces explicit global tile budget and reports the gap', async () => {
     const fixture = context(3712, 3712)
     const result = await runAnalysis({ ...baseInput, coverage: 'full', maxTiles: 10 }, fixture.value)
     expect(fixture.counts.encode).toBe(10)
     expect(result.detailTiles).toBe(10)
     expect(result.complete).toBe(false)
-    expect(result.warnings.some(warning => warning.code === 'TILE_BUDGET_EXCEEDED')).toBe(true)
+    expect(result.warnings).toContainEqual({
+      code: 'TILE_BUDGET_EXCEEDED',
+      message: 'Detail coverage requires 16 tiles, but this call allows 10.',
+      retryable: false,
+      userActionRequired: true,
+      nextAction:
+        'Continue with the partial result, disclose the missing coverage, and increase maxTiles only if the user requests complete analysis.',
+      details: { requiredTiles: 16, allowedTiles: 10 },
+    })
   })
 
   test('malformed auto planning falls back to the configured default budget', async () => {

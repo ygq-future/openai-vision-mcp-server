@@ -1,5 +1,6 @@
 import sharp from 'sharp'
 import type { WebpOptions } from 'sharp'
+import { IMAGE_POLICY } from '../constants.js'
 import { VisionError } from '../errors.js'
 import type { EncodedImage, NormalizedImage } from './types.js'
 
@@ -30,8 +31,6 @@ export interface TileSelection {
 
 export type ContentKind = 'document' | 'screenshot' | 'diagram' | 'photo' | 'uncertain'
 
-const tileByteLimit = 1.5 * 1024 * 1024
-
 function axisAnchors(length: number, tileSize: number, stride: number): number[] {
   if (length <= tileSize) return [0]
   const anchors: number[] = []
@@ -39,6 +38,19 @@ function axisAnchors(length: number, tileSize: number, stride: number): number[]
   const edge = length - tileSize
   if (anchors.at(-1) !== edge) anchors.push(edge)
   return anchors
+}
+
+export function selectEvenlyDistributed<T>(items: readonly T[], count: number): T[] {
+  const slots = Math.min(Math.max(0, Math.floor(count)), items.length)
+  if (slots === items.length) return [...items]
+  const selected: T[] = []
+  for (let slot = 0; slot < slots; slot += 1) {
+    const position =
+      slots === 1 ? Math.floor((items.length - 1) / 2) : Math.round((slot * (items.length - 1)) / (slots - 1))
+    const item = items[position]
+    if (item !== undefined) selected.push(item)
+  }
+  return selected
 }
 
 export function createGrid(width: number, height: number, tileSize: number, overlap: number): TileBounds[] {
@@ -89,12 +101,7 @@ export function selectTiles(
     .map((bounds, tileIndex) => ({ bounds, tileIndex }))
     .filter(tile => !chosenIndexes.has(tile.tileIndex))
   const slots = Math.min(cap - chosen.length, remaining.length)
-  for (let slot = 0; slot < slots; slot += 1) {
-    const position =
-      slots === 1 ? Math.floor((remaining.length - 1) / 2) : Math.round((slot * (remaining.length - 1)) / (slots - 1))
-    const tile = remaining[position]
-    if (tile) chosen.push(tile)
-  }
+  chosen.push(...selectEvenlyDistributed(remaining, slots))
   return { selected: chosen, requiredTiles: grid.length, complete: chosen.length === grid.length }
 }
 
@@ -110,8 +117,12 @@ export async function encodeTile(
   bounds: TileBounds,
   contentKind: ContentKind,
 ): Promise<EncodedImage> {
-  const initial = await encode(image, bounds, contentKind === 'photo' ? { quality: 82 } : { lossless: true })
-  if (initial.length <= tileByteLimit) {
+  const initial = await encode(
+    image,
+    bounds,
+    contentKind === 'photo' ? { quality: IMAGE_POLICY.detailTile.photoQuality } : { lossless: true },
+  )
+  if (initial.length <= IMAGE_POLICY.detailTile.maxBytes) {
     return {
       buffer: initial,
       mediaType: 'image/webp',
@@ -120,9 +131,9 @@ export async function encodeTile(
       bytes: initial.length,
     }
   }
-  for (const quality of [90, 85, 80, 75]) {
+  for (const quality of IMAGE_POLICY.detailTile.fallbackQualities) {
     const candidate = await encode(image, bounds, { quality })
-    if (candidate.length <= tileByteLimit) {
+    if (candidate.length <= IMAGE_POLICY.detailTile.maxBytes) {
       return {
         buffer: candidate,
         mediaType: 'image/webp',
@@ -132,5 +143,7 @@ export async function encodeTile(
       }
     }
   }
-  throw new VisionError('SOURCE_TOO_LARGE', 'A detail tile cannot fit within the encoded byte limit')
+  throw new VisionError('SOURCE_TOO_LARGE', 'A detail tile cannot fit within the encoded byte limit.', {
+    details: { stage: 'detail_tile_encode', maxBytes: IMAGE_POLICY.detailTile.maxBytes },
+  })
 }

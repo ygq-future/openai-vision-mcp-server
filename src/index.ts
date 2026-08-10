@@ -4,11 +4,12 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio'
 import { loadConfig } from './config.js'
+import { SERVER_INFO } from './constants.js'
 import { toSafeError } from './errors.js'
 import { createLogger } from './logger.js'
 import { createServer } from './server.js'
 
-export const packageName = 'openai-vision-mcp-server'
+export const packageName = SERVER_INFO.name
 
 export async function main(): Promise<void> {
   const config = loadConfig(process.env)

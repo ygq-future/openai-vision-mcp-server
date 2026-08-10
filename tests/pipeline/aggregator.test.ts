@@ -8,7 +8,15 @@ const segments: AnalysisSegment[] = [
   { imageIndex: 0, tileIndex: 1, batchIndex: 1, bounds: { x: 10, y: 0, width: 10, height: 10 }, text: 'second' },
   { imageIndex: 0, tileIndex: 0, batchIndex: 0, bounds: { x: 0, y: 0, width: 10, height: 10 }, text: 'first' },
 ]
-const warnings: AnalysisWarning[] = [{ code: 'TILE_BUDGET_EXCEEDED', message: 'missing region' }]
+const warnings: AnalysisWarning[] = [
+  {
+    code: 'TILE_BUDGET_EXCEEDED',
+    message: 'missing region',
+    retryable: false,
+    userActionRequired: true,
+    nextAction: 'Disclose incomplete coverage.',
+  },
+]
 const overviewImage: EncodedImage = {
   buffer: Buffer.from('overview'),
   mediaType: 'image/webp',
@@ -63,7 +71,16 @@ describe('aggregateAnalysis', () => {
       client,
     })
     expect(result.answer.indexOf('first')).toBeLessThan(result.answer.indexOf('second'))
-    expect(result.warnings.some(warning => warning.code === 'AGGREGATION_FAILED')).toBe(true)
+    expect(result.warnings).toContainEqual({
+      code: 'AGGREGATION_FAILED',
+      message:
+        'Final aggregation failed; ordered observations are returned instead: The vision server encountered an unexpected internal error.',
+      retryable: false,
+      userActionRequired: true,
+      nextAction:
+        'Use the ordered observations as a partial result, tell the user they were not finally merged, and do not retry automatically.',
+      details: { underlyingCode: 'INTERNAL_ERROR' },
+    })
     expect(result.complete).toBe(false)
     expect(result.usage.promptTokens).toBeNull()
   })

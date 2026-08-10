@@ -1,4 +1,6 @@
 import type { TileBounds } from '../image/tiles.js'
+import { ANALYSIS_POLICY } from '../constants.js'
+import { toSafeError } from '../errors.js'
 import type { EncodedImage } from '../image/types.js'
 import type { VisionClient, VisionCompletion } from '../openai/client.js'
 import type { AnalysisSegment, AnalysisWarning } from '../tools/analyze-images/schema.js'
@@ -56,11 +58,12 @@ function detailPrompt(userPrompt: string, batch: readonly DetailTile[]): string 
 }
 
 export async function analyzeDetailTiles(input: DetailAnalysisInput): Promise<DetailAnalysisResult> {
-  const batches = Array.from({ length: Math.ceil(input.tiles.length / 6) }, (_, index) =>
-    input.tiles.slice(index * 6, index * 6 + 6),
+  const batchSize = ANALYSIS_POLICY.detailTilesPerBatch
+  const batches = Array.from({ length: Math.ceil(input.tiles.length / batchSize) }, (_, index) =>
+    input.tiles.slice(index * batchSize, index * batchSize + batchSize),
   )
   const completions: (VisionCompletion | undefined)[] = Array.from({ length: batches.length })
-  const failures = new Set<number>()
+  const failures = new Map<number, ReturnType<typeof toSafeError>>()
   let nextBatch = 0
 
   const worker = async (): Promise<void> => {
@@ -74,8 +77,8 @@ export async function analyzeDetailTiles(input: DetailAnalysisInput): Promise<De
           prompt: detailPrompt(input.userPrompt, batch),
           images: batch.map(tile => tile.encoded),
         })
-      } catch {
-        failures.add(batchIndex)
+      } catch (error) {
+        failures.set(batchIndex, toSafeError(error))
       }
     }
   }
@@ -98,9 +101,17 @@ export async function analyzeDetailTiles(input: DetailAnalysisInput): Promise<De
     }
   }
   const successful = completions.filter(completion => completion !== undefined)
-  const warnings: AnalysisWarning[] = [...failures]
-    .sort((a, b) => a - b)
-    .map(batchIndex => ({ code: 'DETAIL_BATCH_FAILED', message: `Detail batch ${String(batchIndex)} failed` }))
+  const warnings: AnalysisWarning[] = [...failures.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([batchIndex, failure]) => ({
+      code: 'DETAIL_BATCH_FAILED',
+      message: `Detail batch ${String(batchIndex)} was skipped: ${failure.safeMessage}`,
+      retryable: failure.retryable,
+      userActionRequired: true,
+      nextAction:
+        'Continue with successful batches and disclose the missing detail region. Retry this analysis once only if the missing region is required.',
+      details: { ...failure.details, underlyingCode: failure.code, batchIndex },
+    }))
   return {
     segments,
     warnings,

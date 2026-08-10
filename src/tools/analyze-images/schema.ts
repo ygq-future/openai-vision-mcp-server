@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { TOOL_LIMITS } from '../../constants.js'
 
 export const maxTilesDescription =
   'Hard ceiling for detail tiles in this call; overview images do not count. If the user states a maximum number of tiles, slices, crops, regions, or 切片, pass that exact integer. Omit when the user gives no limit.'
 
-const labelSchema = z.string().trim().min(1).max(500).optional()
+const labelSchema = z.string().trim().min(TOOL_LIMITS.labelLength.min).max(TOOL_LIMITS.labelLength.max).optional()
 
 const fileSourceSchema = z
   .object({
@@ -36,10 +37,16 @@ export const imageSourceSchema = z.discriminatedUnion('type', [fileSourceSchema,
 
 export const analyzeImagesInputSchema = z
   .object({
-    prompt: z.string().trim().min(1).max(20_000),
-    images: z.array(imageSourceSchema).min(1).max(10),
+    prompt: z.string().trim().min(TOOL_LIMITS.promptLength.min).max(TOOL_LIMITS.promptLength.max),
+    images: z.array(imageSourceSchema).min(TOOL_LIMITS.imagesPerCall.min).max(TOOL_LIMITS.imagesPerCall.max),
     coverage: z.enum(['auto', 'overview', 'full']).default('auto'),
-    maxTiles: z.number().int().min(1).max(64).optional().describe(maxTilesDescription),
+    maxTiles: z
+      .number()
+      .int()
+      .min(TOOL_LIMITS.detailTiles.min)
+      .max(TOOL_LIMITS.detailTiles.max)
+      .optional()
+      .describe(maxTilesDescription),
   })
   .strict()
 
@@ -63,6 +70,7 @@ const segmentSchema = z
   .strict()
 
 const nullableTokenCountSchema = z.number().int().nonnegative().nullable()
+const safeDetailValueSchema = z.union([z.string(), z.number(), z.boolean()])
 
 const usageSchema = z
   .object({
@@ -76,6 +84,10 @@ const warningSchema = z
   .object({
     code: z.string().min(1),
     message: z.string().min(1),
+    retryable: z.boolean(),
+    userActionRequired: z.boolean(),
+    nextAction: z.string().min(1),
+    details: z.record(z.string(), safeDetailValueSchema).optional(),
     imageIndex: z.number().int().nonnegative().optional(),
   })
   .strict()

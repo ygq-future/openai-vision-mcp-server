@@ -4,7 +4,14 @@ import { fileURLToPath } from 'node:url'
 import { VisionError } from '../errors.js'
 
 const denied = (cause?: unknown): VisionError =>
-  new VisionError('FILE_ACCESS_DENIED', 'The local file is not accessible', { cause })
+  new VisionError(
+    'FILE_ACCESS_DENIED',
+    'The local image file is missing, not a regular file, or outside allowed roots.',
+    {
+      details: { stage: 'file_access' },
+      cause,
+    },
+  )
 
 export async function assertAllowedFileUri(uri: string, allowedRoots: readonly string[]): Promise<string> {
   let targetPath: string

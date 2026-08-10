@@ -95,12 +95,27 @@ describe('OpenAI-compatible vision client', () => {
     expect(calls).toBe(1)
   })
 
+  test('tells the caller to stop and request configuration correction after authentication failure', () => {
+    const client = createVisionClient(config, { fetch: () => Promise.resolve(new Response('denied', { status: 401 })) })
+
+    expect(client.complete({ prompt: 'describe', images: [] })).rejects.toMatchObject({
+      code: 'UPSTREAM_AUTH_FAILED',
+      retryable: false,
+      userActionRequired: true,
+      nextAction: 'Do not retry. Ask the user to verify VISION_API_KEY, VISION_BASE_URL, and VISION_MODEL.',
+      details: { stage: 'vision_api', httpStatus: 401 },
+    })
+  })
+
   test('maps timeout and invalid responses safely', () => {
     const timeoutClient = createVisionClient(config, {
       fetch: () => Promise.reject(new DOMException('timed out', 'AbortError')),
     })
     expect(timeoutClient.complete({ prompt: 'describe', images: [] })).rejects.toMatchObject({
       code: 'UPSTREAM_TIMEOUT',
+      retryable: true,
+      userActionRequired: false,
+      nextAction: 'Retry once. If the same timeout happens again, stop and notify the user.',
     })
 
     const invalidJson = createVisionClient(config, { fetch: () => Promise.resolve(new Response('{', { status: 200 })) })
@@ -131,7 +146,11 @@ describe('OpenAI-compatible vision client', () => {
     } catch (error) {
       expect(error).toMatchObject({
         code: 'UPSTREAM_INVALID_RESPONSE',
-        safeMessage: 'The vision API returned a non-JSON response',
+        safeMessage: 'The vision API returned a non-JSON response.',
+        retryable: false,
+        userActionRequired: true,
+        nextAction:
+          'Do not retry automatically. Notify the user that the endpoint is not returning a compatible Chat Completions response.',
       })
       expect(String(error)).not.toContain('gateway secret')
     }
