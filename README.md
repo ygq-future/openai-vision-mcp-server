@@ -1,6 +1,7 @@
 # openai-vision-mcp-server
 
 [![npm version](https://img.shields.io/npm/v/openai-vision-mcp-server.svg)](https://www.npmjs.com/package/openai-vision-mcp-server)
+[![M8ven Score](https://m8ven.ai/badge/mcp/ygq-future-openai-vision-mcp-server-1hv1os)](https://m8ven.ai/mcp/ygq-future-openai-vision-mcp-server-1hv1os)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-ygq--future%2Fopenai--vision--mcp--server-blue?logo=github)](https://github.com/ygq-future/openai-vision-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen.svg)](https://nodejs.org)
