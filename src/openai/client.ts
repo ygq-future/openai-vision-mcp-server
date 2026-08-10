@@ -40,6 +40,16 @@ function retryDelay(response: Response, attempt: number, random: () => number): 
   return Math.min(250 * 2 ** attempt + Math.floor(random() * 100), 10_000)
 }
 
+function hasJsonMediaType(response: Response): boolean {
+  const contentType = response.headers.get('content-type')
+  if (contentType === null) return true
+
+  const mediaType = contentType.split(';')[0]?.trim().toLowerCase()
+  return (
+    mediaType === 'application/json' || Boolean(mediaType?.startsWith('application/') && mediaType.endsWith('+json'))
+  )
+}
+
 function parseCompletion(value: unknown): VisionCompletion {
   const parsed = chatCompletionResponseSchema.safeParse(value)
   if (!parsed.success) throw new VisionError('UPSTREAM_INVALID_RESPONSE', 'The vision API returned an invalid response')
@@ -105,6 +115,9 @@ export function createVisionClient(config: VisionConfig, dependencies: VisionCli
         clearTimeout(timeout)
 
         if (response.ok) {
+          if (!hasJsonMediaType(response)) {
+            throw new VisionError('UPSTREAM_INVALID_RESPONSE', 'The vision API returned a non-JSON response')
+          }
           let value: unknown
           try {
             value = await response.json()

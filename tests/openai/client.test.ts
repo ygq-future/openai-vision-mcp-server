@@ -51,6 +51,8 @@ describe('OpenAI-compatible vision client', () => {
       { type: 'text', text: 'describe' },
       { type: 'image_url', image_url: { url: `data:image/webp;base64,${Buffer.from('webp').toString('base64')}` } },
     ])
+    const imageBlock = body.messages[0]?.content[1] as { image_url?: Record<string, unknown> } | undefined
+    expect(imageBlock?.image_url).not.toHaveProperty('detail')
     expect(result).toEqual({
       text: 'first\nsecond',
       finishReason: 'stop',
@@ -111,4 +113,49 @@ describe('OpenAI-compatible vision client', () => {
       code: 'UPSTREAM_INVALID_RESPONSE',
     })
   })
+
+  test('rejects an explicitly non-JSON successful response without exposing its body', async () => {
+    const client = createVisionClient(config, {
+      fetch: () =>
+        Promise.resolve(
+          new Response('<html>gateway secret</html>', {
+            status: 200,
+            headers: { 'content-type': 'text/html; charset=utf-8' },
+          }),
+        ),
+    })
+
+    try {
+      await client.complete({ prompt: 'describe', images: [] })
+      throw new Error('expected the client to reject a non-JSON response')
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: 'UPSTREAM_INVALID_RESPONSE',
+        safeMessage: 'The vision API returned a non-JSON response',
+      })
+      expect(String(error)).not.toContain('gateway secret')
+    }
+  })
+
+  test.each([null, 'application/vnd.openai.chat+json; charset=utf-8'])(
+    'accepts a valid JSON body with compatible Content-Type %s',
+    async contentType => {
+      const responseInit: ResponseInit =
+        contentType === null ? { status: 200 } : { status: 200, headers: { 'content-type': contentType } }
+      const client = createVisionClient(config, {
+        fetch: () =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({
+                choices: [{ message: { content: 'answer' }, finish_reason: 'stop' }],
+              }),
+              responseInit,
+            ),
+          ),
+      })
+
+      const result = await client.complete({ prompt: 'describe', images: [] })
+      expect(result).toMatchObject({ text: 'answer' })
+    },
+  )
 })

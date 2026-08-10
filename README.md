@@ -16,11 +16,16 @@ A Model Context Protocol (MCP) stdio server for bounded, high-precision image an
 - **Multi-Source Image Inputs**: Analyze images directly from `file://` local paths, `http://` / `https://` URLs, or `base64` raw data payloads.
 - **Smart Adaptive Tiling & Overview Pipeline**: Automatically generates overview thumbnails and ordered overlapping detail tiles for high-resolution images, preserving visual detail without hitting token limits.
 - **Universal OpenAI Compatibility**: Works with any API endpoint following the standard OpenAI `/chat/completions` vision protocol.
-- **Strict Security & Resource Bounds**:
-  - Built-in SSRF protection against unauthorized internal network scans (`VISION_ALLOW_PRIVATE_NETWORK`).
-  - Safe local file access controlled via root path whitelisting (`VISION_ALLOWED_FILE_ROOTS`).
+- **Configurable Security & Resource Bounds**:
+  - Optional SSRF protection for public-network-only deployments (`VISION_ALLOW_PRIVATE_NETWORK=false`).
+  - Optional local file root restrictions (`VISION_ALLOWED_FILE_ROOTS`).
   - Configurable ceilings for file size, decoded pixel count, HTTP timeouts, and max redirects.
 - **Clean Stdio Transport**: Keeps `stdout` strictly isolated for standard MCP JSON-RPC protocol messages while outputting diagnostics to `stderr` without leaking credentials or payloads.
+
+> [!IMPORTANT]
+> Local-file and private-network access are permissive by default for local MCP convenience. Set
+> `VISION_ALLOWED_FILE_ROOTS` to explicit roots and `VISION_ALLOW_PRIVATE_NETWORK` to `false` when the MCP client or
+> analyzed prompts are not fully trusted.
 
 ---
 

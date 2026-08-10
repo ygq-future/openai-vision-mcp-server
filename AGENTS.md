@@ -49,7 +49,9 @@ Use ESLint flat configuration with type-aware TypeScript rules. Do not disable a
 - Treat `maxTiles` as a hard per-call ceiling on detail tiles. The overview does not count toward it.
 - Preserve tile and batch order explicitly. Never rely on promise completion order.
 - When a budget prevents complete coverage, return `complete: false` with a machine-readable warning; never silently imply complete analysis.
-- Protect local-file reads with allowed roots and remote fetches with SSRF checks, redirect limits, timeouts, byte limits, and decoded-pixel limits.
+- Apply configured allowed-root and SSRF policies on every local-file or remote fetch. The current defaults are
+  permissive; documentation must explain how users opt into root restrictions and public-network-only URL access.
+  Redirect limits, timeouts, byte limits, and decoded-pixel limits always remain enforced.
 
 ## Development workflow
 
@@ -59,3 +61,8 @@ Use ESLint flat configuration with type-aware TypeScript rules. Do not disable a
 - Add unit tests for pure policy and transformation logic, integration tests for HTTP/image pipelines, and an MCP stdio smoke test.
 - Use conventional commit messages with focused scope.
 - Do not publish from an unclean working tree.
+- Never publish packages, create releases, or modify registry tags. The assistant's release responsibility ends after
+  implementation, verification, documentation updates, and a local commit; the user performs publication.
+- After each release-ready commit, provide the user with the manual release/update procedure. Do not run
+  `bun publish`, `npm publish`, registry authentication, or remote release/tag commands. Do not push unless the user
+  separately asks.
