@@ -55,6 +55,8 @@ Use ESLint flat configuration with type-aware TypeScript rules. Do not disable a
 
 ## Development workflow
 
+- Work directly on `main` for this single-developer repository unless the user explicitly requests a separate branch.
+  Do not create feature branches or pull requests by default.
 - Follow test-driven development: add a failing test, verify the failure, implement the smallest behavior, then rerun focused and full checks.
 - Always synchronize documentation (including README.md and docs/development-progress.md) immediately after any code or default configuration changes.
 - Run `bun run check` before every commit.
