@@ -85,6 +85,8 @@ Configuration is passed entirely through environment variables defined in the MC
 ### `analyze_images`
 
 Analyzes single or multiple images using configured Vision models and produces structured analysis reports.
+The MCP declaration marks the Tool as read-only and non-destructive, non-idempotent because each call can consume
+upstream API usage, and open-world because it can fetch remote images and call an external Vision endpoint.
 
 #### Input Schema
 

@@ -72,6 +72,12 @@ describe('MCP stdio server', () => {
       await client.connect(transport)
       const listing = await client.listTools()
       expect(listing.tools.map(tool => tool.name)).toEqual(['analyze_images'])
+      expect(listing.tools[0]?.annotations).toEqual({
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      })
       const maxTiles = (
         listing.tools[0]?.inputSchema.properties as Record<string, { description?: string }> | undefined
       )?.maxTiles

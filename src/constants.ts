@@ -4,7 +4,7 @@ const HTTP_STATUS_TOO_MANY_REQUESTS = 429
 
 export const SERVER_INFO = {
   name: 'openai-vision-mcp-server',
-  version: '0.1.9',
+  version: '0.1.11',
 } as const
 
 export const TOOL_LIMITS = {

@@ -24,6 +24,12 @@ export function createServer(dependencies: ServerDependencies): McpServer {
       title: 'Analyze images',
       description:
         'Analyze file://, HTTP(S), or Base64 images through an OpenAI-compatible vision model. The server creates an overview, inspects ordered overlapping detail tiles when needed, and aggregates results without hiding missing coverage. Use maxTiles as the exact hard detail-tile ceiling when the user states a maximum number of tiles, slices, crops, regions, or 切片; overview images do not count.',
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
       inputSchema: analyzeImagesInputSchema,
       outputSchema: analyzeImagesOutputSchema,
     },
