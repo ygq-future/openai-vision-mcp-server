@@ -33,6 +33,8 @@ A Model Context Protocol (MCP) stdio server for bounded, high-precision image an
 ## 🚀 Quick Start
 
 You can run `openai-vision-mcp-server` without manual installation using `npx` or `bunx`.
+The executable also resolves correctly when npm launches the current checkout through a `.bin` directory link, so an
+explicit version such as `@latest` is optional.
 
 ### MCP Client Integration Examples
 

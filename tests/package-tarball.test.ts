@@ -79,5 +79,13 @@ describe('npm package tarball', () => {
     expect(execution.stdout).toBe('')
     expect(execution.stderr).toContain('CONFIG_INVALID')
     expect(execution.stderr).not.toContain('VISION_API_KEY=')
+
+    const localExecution = await run(npx, ['--yes', 'openai-vision-mcp-server'], {
+      cwd: process.cwd(),
+      env: cleanEnvironment,
+    })
+    expect(localExecution.code).toBe(1)
+    expect(localExecution.stdout).toBe('')
+    expect(localExecution.stderr).toContain('CONFIG_INVALID')
   }, 30_000)
 })

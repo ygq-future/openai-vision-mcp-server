@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import { realpathSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio'
 import { loadConfig } from './config.js'
 import { SERVER_INFO } from './constants.js'
@@ -31,7 +32,7 @@ export async function main(): Promise<void> {
 }
 
 const entryPath = process.argv[1]
-if (entryPath !== undefined && import.meta.url === pathToFileURL(resolve(entryPath)).href) {
+if (entryPath !== undefined && realpathSync(resolve(entryPath)) === realpathSync(fileURLToPath(import.meta.url))) {
   const logger = createLogger()
   main().catch((error: unknown) => {
     const safe = toSafeError(error)
