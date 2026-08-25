@@ -57,6 +57,7 @@ describe('npm package tarball', () => {
     expect(entries).toContain('package/package.json')
     expect(entries).toContain('package/LICENSE')
     expect(entries).toContain('package/dist/index.js')
+    expect(entries).toContain('package/README.zh-CN.md')
     expect(
       entries.some(entry =>
         ['package/src/', 'package/tests/', 'package/docs/', 'package/.planning/', 'package/.codex/'].some(prefix =>

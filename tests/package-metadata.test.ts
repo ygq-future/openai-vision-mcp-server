@@ -7,7 +7,7 @@ describe('package metadata', () => {
 
     expect(json).toMatchObject({
       name: 'openai-vision-mcp-server',
-      version: '0.1.11',
+      version: '0.1.12',
       type: 'module',
       bin: { 'openai-vision-mcp-server': './dist/index.js' },
       engines: { node: '>=20.19.0' },

@@ -18,7 +18,7 @@ const requiredEnvironment = {
 
 describe('central policy constants', () => {
   test('keep server and public tool policies synchronized', () => {
-    expect(SERVER_INFO).toEqual({ name: 'openai-vision-mcp-server', version: '0.1.11' })
+    expect(SERVER_INFO).toEqual({ name: 'openai-vision-mcp-server', version: '0.1.12' })
     expect(TOOL_LIMITS.detailTiles).toEqual({ min: 1, max: 64, default: 24 })
 
     const parsed = analyzeImagesInputSchema.parse({
